@@ -34,7 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     if(authHeader == null || !authHeader.startsWith("Bearer ")){
         filterChain.doFilter(request,response);
-        return;
+        return; //403
         }
 
         jwt = authHeader.substring(7);
@@ -46,6 +46,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,    null,   userDetails.getAuthorities()
                 );
+
+                //attaches additional details (IP address, session ID) to the Authentication object.
                 authToken.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
