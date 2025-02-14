@@ -31,8 +31,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     final String authHeader = request.getHeader("Authorization");
     final String jwt ;
     final String userEmail;
-
+        System.out.println("Auth header: "+authHeader);
     if(authHeader == null || !authHeader.startsWith("Bearer ")){
+        System.out.println("---------403 response---------");
+ //       response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         filterChain.doFilter(request,response);
         return; //403
         }

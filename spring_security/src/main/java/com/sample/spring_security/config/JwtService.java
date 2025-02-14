@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,12 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY = "a2b8fe5c7d8e4a5c1d8a6b3f4e5a8b9c0d8e5a2f9b8e3c7f1e5d6c3b2a1f4e5a";
+    @Value("${application.security.jwt.security-key}")
+    private String secretKey;
+    @Value("${application.security.jwt.expiration}")
+    private long expiration;
+    @Value("${application.security.jwt.refresh-token.expiration}")
+    private long refreshExpiration;
 
     public String extractUsername(String token) {
         return extractClaims(token, Claims::getSubject);  //getSub is email or username
@@ -32,12 +38,23 @@ public class JwtService {
             Map<String,Object> extraClaims,
             UserDetails userDetails
     ){
+        return buildToken(extraClaims,userDetails,expiration);
+    }
+
+    public String generateRefreshToken(
+            UserDetails userDetails
+    ){
+        return buildToken(new HashMap<>(),userDetails,refreshExpiration);
+    }
+
+    public String buildToken(Map<String,Object> extraClaims,
+                             UserDetails userDetails, long jwtExpiration){
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000*60*24))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -69,7 +86,7 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyByte = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyByte = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyByte);
     }
 }
